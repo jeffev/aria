@@ -292,6 +292,70 @@
     }
     .roadmap-item span { font-size: 13px; color: var(--muted); line-height: 1.5; }
 
+    /* ── Setup ── */
+    .setup-tabs { display: flex; gap: 8px; margin-bottom: 28px; flex-wrap: wrap; }
+    .tab-btn {
+      padding: 8px 18px; border-radius: 8px; border: 1px solid var(--border);
+      background: transparent; color: var(--muted); font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all .2s; font-family: inherit;
+    }
+    .tab-btn.active, .tab-btn:hover {
+      background: rgba(99,102,241,.12); border-color: rgba(99,102,241,.4); color: var(--text);
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .steps { display: flex; flex-direction: column; gap: 16px; }
+    .step {
+      display: grid; grid-template-columns: 36px 1fr; gap: 16px; align-items: start;
+    }
+    .step-num {
+      width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+      background: rgba(99,102,241,.12); border: 1px solid rgba(99,102,241,.3);
+      color: var(--accent);
+    }
+    .step-body { padding-top: 6px; }
+    .step-body h4 { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+    .step-body p { font-size: 13px; color: var(--muted); margin-bottom: 10px; line-height: 1.6; }
+    .step-body p:last-child { margin-bottom: 0; }
+    .code-block {
+      background: #0d0e1a; border: 1px solid var(--border); border-radius: 10px;
+      padding: 14px 16px; font-family: 'Fira Code', 'Cascadia Code', 'Courier New', monospace;
+      font-size: 13px; color: #a5b4fc; overflow-x: auto; position: relative;
+    }
+    .code-block .comment { color: var(--muted); }
+    .code-block .cmd { color: #7dd3fc; }
+    .code-block .val { color: #86efac; }
+    .env-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px;
+    }
+    @media (max-width: 600px) { .env-grid { grid-template-columns: 1fr; } }
+    .env-item {
+      background: #0d0e1a; border: 1px solid var(--border); border-radius: 8px;
+      padding: 12px 14px;
+    }
+    .env-item .env-key { font-family: monospace; font-size: 12px; color: #a5b4fc; margin-bottom: 4px; }
+    .env-item .env-desc { font-size: 12px; color: var(--muted); }
+    .env-item .env-link a { color: var(--accent); font-size: 12px; text-decoration: none; }
+    .env-item .env-link a:hover { text-decoration: underline; }
+    .req-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+    .req-row {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px 16px;
+    }
+    .req-row .req-icon { font-size: 18px; flex-shrink: 0; }
+    .req-row .req-name { font-size: 14px; font-weight: 600; }
+    .req-row .req-ver { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .req-row .req-link { margin-left: auto; }
+    .req-row .req-link a {
+      font-size: 12px; font-weight: 600; color: var(--accent);
+      text-decoration: none; border: 1px solid rgba(99,102,241,.3);
+      padding: 4px 10px; border-radius: 6px; transition: all .2s;
+    }
+    .req-row .req-link a:hover { background: rgba(99,102,241,.1); }
+
     /* ── Footer ── */
     footer {
       border-top: 1px solid var(--border);
@@ -341,6 +405,7 @@
       <a href="#features">Funcionalidades</a>
       <a href="#stack">Stack</a>
       <a href="#roadmap">Roadmap</a>
+      <a href="#setup">Instalação</a>
     </div>
     <a class="btn btn-primary" href="https://github.com/jeffev/aria" target="_blank" rel="noopener">
       <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
@@ -643,6 +708,164 @@
 
 <hr class="divider" />
 
+<!-- ── SETUP ────────────────────────────────────────── -->
+<section id="setup">
+  <div class="container">
+    <div class="section-head fade-in">
+      <span class="tag">Instalação</span>
+      <h2>Rodando localmente</h2>
+      <p>Web app e overlay desktop rodam separadamente. Siga os passos abaixo para cada um.</p>
+    </div>
+
+    <!-- Pré-requisitos -->
+    <div class="fade-in" style="max-width:720px;margin:0 auto 48px;">
+      <h3 style="font-size:15px;font-weight:600;margin-bottom:16px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;">Pré-requisitos</h3>
+      <div class="req-list">
+        <div class="req-row">
+          <span class="req-icon">🟩</span>
+          <div>
+            <div class="req-name">Node.js</div>
+            <div class="req-ver">Versão 20 ou superior</div>
+          </div>
+          <div class="req-link"><a href="https://nodejs.org" target="_blank" rel="noopener">Download</a></div>
+        </div>
+        <div class="req-row">
+          <span class="req-icon">🐋</span>
+          <div>
+            <div class="req-name">Docker</div>
+            <div class="req-ver">Para o banco PostgreSQL local</div>
+          </div>
+          <div class="req-link"><a href="https://docs.docker.com/get-docker/" target="_blank" rel="noopener">Download</a></div>
+        </div>
+        <div class="req-row">
+          <span class="req-icon">✦</span>
+          <div>
+            <div class="req-name">Google Gemini API Key</div>
+            <div class="req-ver">Plano gratuito disponível no AI Studio</div>
+          </div>
+          <div class="req-link"><a href="https://aistudio.google.com/" target="_blank" rel="noopener">Obter chave</a></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="fade-in" style="max-width:720px;margin:0 auto;">
+      <div class="setup-tabs">
+        <button class="tab-btn active" onclick="switchTab('web')">🌐 Web App</button>
+        <button class="tab-btn" onclick="switchTab('desktop')">🖥️ Overlay Desktop</button>
+      </div>
+
+      <!-- Tab: Web App -->
+      <div id="tab-web" class="tab-panel active">
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <h4>Clone o repositório</h4>
+              <div class="code-block"><span class="cmd">git clone</span> https://github.com/jeffev/aria.git
+<span class="cmd">cd</span> aria</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <h4>Suba o banco de dados</h4>
+              <p>Inicia o PostgreSQL 16 via Docker Compose na porta 5432.</p>
+              <div class="code-block"><span class="cmd">docker compose up</span> -d</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <h4>Configure as variáveis de ambiente</h4>
+              <p>Copie o template e preencha as chaves necessárias.</p>
+              <div class="code-block"><span class="cmd">cp</span> app/.env.example app/.env.local</div>
+              <div class="env-grid" style="margin-top:14px;">
+                <div class="env-item">
+                  <div class="env-key">DATABASE_URL</div>
+                  <div class="env-desc">Connection string do PostgreSQL local (já preenchida no .env.example)</div>
+                </div>
+                <div class="env-item">
+                  <div class="env-key">GEMINI_API_KEY</div>
+                  <div class="env-desc">Chave do Google AI Studio</div>
+                  <div class="env-link"><a href="https://aistudio.google.com/" target="_blank" rel="noopener">↗ Obter</a></div>
+                </div>
+                <div class="env-item">
+                  <div class="env-key">GOOGLE_CLIENT_ID<br/>GOOGLE_CLIENT_SECRET</div>
+                  <div class="env-desc">OAuth 2.0 para Google Calendar (opcional)</div>
+                  <div class="env-link"><a href="https://console.cloud.google.com/" target="_blank" rel="noopener">↗ Google Cloud Console</a></div>
+                </div>
+                <div class="env-item">
+                  <div class="env-key">DISCORD_TOKEN<br/>MICROSOFT_*</div>
+                  <div class="env-desc">Integrações opcionais — deixe em branco para ignorar</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <h4>Instale as dependências e rode as migrations</h4>
+              <div class="code-block"><span class="cmd">cd</span> app
+<span class="cmd">npm install</span>
+<span class="cmd">npx prisma migrate dev</span></div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">5</div>
+            <div class="step-body">
+              <h4>Inicie o servidor de desenvolvimento</h4>
+              <div class="code-block"><span class="cmd">npm run dev</span>
+
+<span class="comment"># Acesse em http://localhost:3000</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Desktop Overlay -->
+      <div id="tab-desktop" class="tab-panel">
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <h4>Acesse a pasta do overlay</h4>
+              <div class="code-block"><span class="cmd">cd</span> desktop</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <h4>Instale as dependências</h4>
+              <div class="code-block"><span class="cmd">npm install</span></div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <h4>Inicie o overlay</h4>
+              <p>O Electron abre uma janela flutuante sempre visível. Use o atalho para mostrar/ocultar.</p>
+              <div class="code-block"><span class="cmd">npm run dev</span>
+
+<span class="comment"># Atalho para abrir/fechar: Ctrl+Shift+A</span></div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:rgba(139,92,246,.12);border-color:rgba(139,92,246,.3);color:var(--accent2);">!</div>
+            <div class="step-body">
+              <h4 style="color:var(--accent2);">O web app precisa estar rodando</h4>
+              <p>O overlay consome a API do web app. Certifique-se de que o <code style="font-family:monospace;font-size:12px;color:#a5b4fc;">npm run dev</code> da pasta <code style="font-family:monospace;font-size:12px;color:#a5b4fc;">app/</code> já está ativo antes de abrir o overlay.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<hr class="divider" />
+
 <!-- ── FOOTER ────────────────────────────────────────── -->
 <footer>
   <div class="container">
@@ -665,6 +888,13 @@
 </footer>
 
 <script>
+  function switchTab(name) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    event.currentTarget.classList.add('active');
+  }
+
   const obs = new IntersectionObserver((entries) => {
     entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
   }, { threshold: 0.12 });
