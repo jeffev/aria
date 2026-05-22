@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 480">
+  <defs>
+    <linearGradient id="g" x1="200" y1="60" x2="200" y2="352" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#7ED3F9"/>
+      <stop offset="100%" stop-color="#9B5CF6"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Speech bubble "a" shape: 240° arc counterclockwise from 1-o'clock to 5-o'clock, then curved tail -->
+  <path
+    d="M 260 81 A 120 120 0 1 0 260 289 Q 252 322 228 340"
+    fill="none"
+    stroke="url(#g)"
+    stroke-width="22"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+
+  <!-- Left eye -->
+  <rect x="170" y="162" width="13" height="22" rx="6.5" fill="#8B5CF6"/>
+  <!-- Right eye -->
+  <rect x="215" y="162" width="13" height="22" rx="6.5" fill="#8B5CF6"/>
+
+  <!-- Wordmark -->
+  <text
+    x="200"
+    y="432"
+    text-anchor="middle"
+    font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
+    font-size="68"
+    font-weight="400"
+    letter-spacing="6"
+    fill="#1E1B4B"
+  >aria</text>
+</svg>

@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/teams-sync",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/discord-sync",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/briefing",
+      "schedule": "0 8 * * 1-5"
+    }
+  ]
+}

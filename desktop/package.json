@@ -1,0 +1,39 @@
+{
+  "name": "aria-desktop",
+  "version": "0.1.0",
+  "description": "ARIA – Assistente Pessoal (Desktop Overlay)",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev:vite": "vite",
+    "dev:electron": "wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .",
+    "dev": "concurrently -n VITE,ELECTRON -c cyan,magenta \"npm run dev:vite\" \"npm run dev:electron\"",
+    "build": "vite build && electron-builder",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^4",
+    "concurrently": "^9",
+    "cross-env": "^7",
+    "electron": "^34",
+    "electron-builder": "^25",
+    "react": "^19",
+    "react-dom": "^19",
+    "typescript": "^5",
+    "vite": "^6",
+    "wait-on": "^8"
+  },
+  "build": {
+    "appId": "com.aria.desktop",
+    "productName": "ARIA",
+    "directories": { "output": "release" },
+    "win": {
+      "target": "nsis"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*"
+    ]
+  }
+}

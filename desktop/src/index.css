@@ -1,0 +1,33 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+:root {
+  --bg:           rgba(13, 12, 28, 0.93);
+  --border:       rgba(139, 92, 246, 0.4);
+  --accent:       #8B5CF6;
+  --accent-blue:  #7ED3F9;
+  --text:         #e2e0f0;
+  --text-muted:   rgba(226, 224, 240, 0.45);
+  --surface:      rgba(255, 255, 255, 0.05);
+  --success:      #10B981;
+}
+
+/* Draggable regions for frameless window */
+.drag    { -webkit-app-region: drag;    }
+.no-drag { -webkit-app-region: no-drag; }
+
+input, button, textarea { -webkit-app-region: no-drag; }
+
+/* Thin purple scrollbar */
+::-webkit-scrollbar       { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(139, 92, 246, 0.4); border-radius: 2px; }

@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  // URL configurada em prisma.config.ts (Prisma 7+)
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  priority    Priority  @default(MEDIUM)
+  dueDate     DateTime?
+  done        Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Event {
+  id             String      @id @default(cuid())
+  title          String
+  description    String?
+  startAt        DateTime
+  endAt          DateTime?
+  allDay         Boolean     @default(false)
+  recurrence     Recurrence  @default(NONE)
+  recurrenceEnd  DateTime?
+  source         EventSource @default(MANUAL)
+  sourceId       String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@unique([source, sourceId])
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   @default("")
+  pinned    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model Notification {
+  id         String             @id @default(cuid())
+  source     NotificationSource
+  sourceId   String
+  content    String
+  read       Boolean            @default(false)
+  receivedAt DateTime           @default(now())
+
+  @@unique([source, sourceId])
+}
+
+model AiMessage {
+  id        String   @id @default(cuid())
+  role      String
+  content   String
+  createdAt DateTime @default(now())
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum Recurrence {
+  NONE
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum EventSource {
+  MANUAL
+  TEAMS
+  GOOGLE_CALENDAR
+}
+
+enum NotificationSource {
+  TEAMS
+  DISCORD
+}
