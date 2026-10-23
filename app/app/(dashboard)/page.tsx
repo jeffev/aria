@@ -1,15 +1,17 @@
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import Chat from "@/components/chat";
 
-async function getDashboardData() {
+async function getDashboardData(userId: string) {
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const todayEnd = new Date(todayStart.getTime() + 86400000);
 
   const [pendingTasks, todayEvents, unreadNotifications] = await Promise.all([
-    prisma.task.count({ where: { done: false } }),
+    prisma.task.count({ where: { userId, done: false } }),
     prisma.event.findMany({
-      where: { startAt: { gte: todayStart, lt: todayEnd } },
+      where: { userId, startAt: { gte: todayStart, lt: todayEnd } },
       orderBy: { startAt: "asc" },
     }),
     prisma.notification.count({ where: { read: false } }),
@@ -19,7 +21,13 @@ async function getDashboardData() {
 }
 
 export default async function DashboardPage() {
-  const { pendingTasks, todayEvents, unreadNotifications } = await getDashboardData();
+  // Página de servidor: sem o filtro por dono, um usuário via as tarefas e
+  // os eventos de todos os outros.
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) redirect("/login");
+
+  const { pendingTasks, todayEvents, unreadNotifications } = await getDashboardData(userId);
 
   const now = new Date();
   const hour = now.getHours();
