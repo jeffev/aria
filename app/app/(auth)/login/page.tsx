@@ -59,7 +59,7 @@ export default function LoginPage() {
             Demonstração: entre como visitante, sem cadastro. Seus dados ficam
             numa conta temporária, apagada em 24 horas.
           </p>
-          <button onClick={enterAsGuest} disabled={loading} style={primaryBtnStyle}>
+          <button onClick={enterAsGuest} disabled={loading} style={{ ...primaryBtnStyle, width: "100%" }}>
             {loading ? "Entrando..." : "Entrar como visitante"}
           </button>
           {error && (
