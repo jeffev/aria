@@ -2,7 +2,7 @@
 
 Dashboard web pessoal com IA (Gemini), agenda própria, tarefas, notas, clima, pesquisa global, notificações do browser e integração com Google Calendar, Teams e Discord. Inclui também um overlay desktop via Electron.
 
-**Demo:** https://aria-demo-beta.vercel.app — entre como visitante (conta temporária, apagada em 24 h). O chat usa a sua própria chave do Gemini, cadastrada em Configurações.
+**Demo:** https://aria.jeffersonvalandro.com.br — entre como visitante (conta temporária, apagada em 24 h). O chat usa a sua própria chave do Gemini, cadastrada em Configurações.
 
 ---
 
