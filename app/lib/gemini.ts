@@ -1,6 +1,5 @@
 import { GoogleGenerativeAI, Tool, FunctionDeclaration, SchemaType } from "@google/generative-ai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 // ─── Definições das funções que a ARIA pode executar ─────────────────────────
 
@@ -54,8 +53,8 @@ export const ariaTools: Tool[] = [{ functionDeclarations }];
 
 // ─── Modelo com function calling ─────────────────────────────────────────────
 
-export function createAriaModel() {
-  return genAI.getGenerativeModel({
+export function createAriaModel(apiKey: string) {
+  return new GoogleGenerativeAI(apiKey).getGenerativeModel({
     model: "gemini-2.5-flash",
     tools: ariaTools,
   });
@@ -63,10 +62,13 @@ export function createAriaModel() {
 
 // ─── Modelo simples (sem tools) — para uso interno ───────────────────────────
 
-export const geminiModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+export async function askGemini(apiKey: string, prompt: string, context?: string): Promise<string> {
+  const model = new GoogleGenerativeAI(apiKey).getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+  const fullPrompt = context ? `${context}
 
-export async function askGemini(prompt: string, context?: string): Promise<string> {
-  const fullPrompt = context ? `${context}\n\n---\n\nUsuário: ${prompt}` : prompt;
-  const result = await geminiModel.generateContent(fullPrompt);
+---
+
+Usuário: ${prompt}` : prompt;
+  const result = await model.generateContent(fullPrompt);
   return result.response.text();
 }

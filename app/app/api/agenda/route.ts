@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getAuthenticatedUserId, unauthorized } from "@/lib/api-auth";
+import { isOverItemLimit, itemLimitMessage } from "@/lib/demo";
 import { Event } from "@/generated/prisma/client";
 
 type Recurrence = "NONE" | "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY";
 
-// Gera instâncias de um evento recorrente dentro do intervalo [from, to]
 function expandEvent(event: Event, from: Date, to: Date) {
   if (event.recurrence === "NONE") {
-    // Evento simples: só inclui se estiver no intervalo
     return event.startAt <= to && event.startAt >= from ? [event] : [];
   }
 
@@ -37,7 +37,6 @@ function expandEvent(event: Event, from: Date, to: Date) {
       });
     }
 
-    // Avança para a próxima ocorrência
     const next = new Date(cursor);
     switch (event.recurrence as Recurrence) {
       case "DAILY":   next.setDate(next.getDate() + 1); break;
@@ -51,8 +50,10 @@ function expandEvent(event: Event, from: Date, to: Date) {
   return instances;
 }
 
-// GET /api/agenda?from=&to=
 export async function GET(request: Request) {
+  const userId = await getAuthenticatedUserId(request);
+  if (!userId) return unauthorized();
+
   const { searchParams } = new URL(request.url);
   const from = searchParams.get("from");
   const to = searchParams.get("to");
@@ -60,15 +61,11 @@ export async function GET(request: Request) {
   const fromDate = from ? new Date(from) : new Date();
   const toDate = to ? new Date(to) : new Date(Date.now() + 7 * 86400000);
 
-  // Busca eventos cujo startAt original está até o fim do intervalo
-  // OU que são recorrentes e ainda não terminaram
   const baseEvents = await prisma.event.findMany({
     where: {
+      userId,
       OR: [
-        // Eventos normais dentro do intervalo
         { recurrence: "NONE", startAt: { gte: fromDate, lte: toDate } },
-        // Eventos recorrentes que começaram antes do fim do intervalo
-        // e cuja recorrência ainda não terminou (ou não tem fim definido)
         {
           recurrence: { not: "NONE" },
           startAt: { lte: toDate },
@@ -82,15 +79,19 @@ export async function GET(request: Request) {
     orderBy: { startAt: "asc" },
   });
 
-  // Expande cada evento e achata o resultado
   const expanded = baseEvents.flatMap((ev) => expandEvent(ev, fromDate, toDate));
   expanded.sort((a, b) => a.startAt.getTime() - b.startAt.getTime());
 
   return NextResponse.json(expanded);
 }
 
-// POST /api/agenda
 export async function POST(request: Request) {
+  const userId = await getAuthenticatedUserId(request);
+  if (!userId) return unauthorized();
+  if (await isOverItemLimit("event", userId)) {
+    return NextResponse.json({ error: itemLimitMessage() }, { status: 403 });
+  }
+
   const body = await request.json();
   const { title, description, startAt, endAt, allDay, recurrence, recurrenceEnd } = body;
 
@@ -100,6 +101,7 @@ export async function POST(request: Request) {
 
   const event = await prisma.event.create({
     data: {
+      userId,
       title,
       description: description ?? null,
       startAt: new Date(startAt),

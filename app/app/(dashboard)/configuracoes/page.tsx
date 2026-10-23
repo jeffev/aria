@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+const IS_DEMO = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+
 export default function ConfiguracoesPage() {
   const [googleConnected, setGoogleConnected] = useState<boolean | null>(null);
   const [syncing, setSyncing] = useState(false);
@@ -33,37 +35,41 @@ export default function ConfiguracoesPage() {
         Integrações e preferências do ARIA
       </p>
 
+      <GeminiKeySection />
+
       {/* Google Calendar */}
-      <Section title="Google Calendar">
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
-          <div>
-            <p style={{ margin: 0, fontSize: 14 }}>
-              Status:{" "}
-              <span style={{ color: googleConnected ? "var(--success)" : "var(--foreground-muted)", fontWeight: 500 }}>
-                {googleConnected === null ? "Verificando..." : googleConnected ? "Conectado" : "Não conectado"}
-              </span>
-            </p>
-            <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--foreground-muted)" }}>
-              Importa eventos dos próximos 14 dias para a Agenda do ARIA.
-            </p>
+      {!IS_DEMO && (
+        <Section title="Google Calendar">
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+            <div>
+              <p style={{ margin: 0, fontSize: 14 }}>
+                Status:{" "}
+                <span style={{ color: googleConnected ? "var(--success)" : "var(--foreground-muted)", fontWeight: 500 }}>
+                  {googleConnected === null ? "Verificando..." : googleConnected ? "Conectado" : "Não conectado"}
+                </span>
+              </p>
+              <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--foreground-muted)" }}>
+                Importa eventos dos próximos 14 dias para a Agenda do ARIA.
+              </p>
+            </div>
+            <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+              {googleConnected && (
+                <button onClick={syncNow} disabled={syncing} style={secondaryBtnStyle}>
+                  {syncing ? "Sincronizando..." : "Sincronizar agora"}
+                </button>
+              )}
+              <a href="/api/google/auth" style={primaryBtnStyle}>
+                {googleConnected ? "Reconectar" : "Conectar"}
+              </a>
+            </div>
           </div>
-          <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-            {googleConnected && (
-              <button onClick={syncNow} disabled={syncing} style={secondaryBtnStyle}>
-                {syncing ? "Sincronizando..." : "Sincronizar agora"}
-              </button>
-            )}
-            <a href="/api/google/auth" style={primaryBtnStyle}>
-              {googleConnected ? "Reconectar" : "Conectar"}
-            </a>
-          </div>
-        </div>
-        {syncResult && (
-          <p style={{ margin: "12px 0 0", fontSize: 13, color: syncResult.includes("sucesso") || syncResult.includes("Sincronizado") ? "var(--success)" : "var(--danger)" }}>
-            {syncResult}
-          </p>
-        )}
-      </Section>
+          {syncResult && (
+            <p style={{ margin: "12px 0 0", fontSize: 13, color: syncResult.includes("sucesso") || syncResult.includes("Sincronizado") ? "var(--success)" : "var(--danger)" }}>
+              {syncResult}
+            </p>
+          )}
+        </Section>
+      )}
 
       {/* Teams (futuro) */}
       <Section title="Microsoft Teams">
@@ -79,6 +85,76 @@ export default function ConfiguracoesPage() {
         </p>
       </Section>
     </div>
+  );
+}
+
+function GeminiKeySection() {
+  const [configured, setConfigured] = useState<boolean | null>(null);
+  const [apiKey, setApiKey] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/configuracoes/gemini").then((r) => r.json()).then((d) => setConfigured(d.configured));
+  }, []);
+
+  async function save(method: "PUT" | "DELETE") {
+    setSaving(true);
+    setMessage(null);
+    const res = await fetch("/api/configuracoes/gemini", {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: method === "PUT" ? JSON.stringify({ apiKey }) : undefined,
+    });
+    const data = await res.json();
+    if (res.ok) {
+      setConfigured(data.configured);
+      setApiKey("");
+      setMessage({ text: data.configured ? "Chave salva." : "Chave removida.", ok: true });
+    } else {
+      setMessage({ text: data.error, ok: false });
+    }
+    setSaving(false);
+  }
+
+  return (
+    <Section title="Inteligência artificial (Gemini)">
+      <p style={{ margin: "0 0 12px", fontSize: 14 }}>
+        Status:{" "}
+        <span style={{ color: configured ? "var(--success)" : "var(--foreground-muted)", fontWeight: 500 }}>
+          {configured === null ? "Verificando..." : configured ? "Chave configurada" : "Sem chave"}
+        </span>
+      </p>
+      <p style={{ margin: "0 0 12px", fontSize: 12, color: "var(--foreground-muted)" }}>
+        O chat usa a sua própria chave do Gemini, guardada cifrada. Gere uma grátis em{" "}
+        <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" style={{ color: "var(--accent)" }}>
+          aistudio.google.com/apikey
+        </a>
+        .
+      </p>
+      <div style={{ display: "flex", gap: 8 }}>
+        <input
+          type="password"
+          value={apiKey}
+          onChange={(e) => setApiKey(e.target.value)}
+          placeholder="AIza..."
+          style={inputStyle}
+        />
+        <button onClick={() => save("PUT")} disabled={saving || !apiKey} style={primaryBtnStyle}>
+          Salvar
+        </button>
+        {configured && (
+          <button onClick={() => save("DELETE")} disabled={saving} style={secondaryBtnStyle}>
+            Remover
+          </button>
+        )}
+      </div>
+      {message && (
+        <p style={{ margin: "12px 0 0", fontSize: 13, color: message.ok ? "var(--success)" : "var(--danger)" }}>
+          {message.text}
+        </p>
+      )}
+    </Section>
   );
 }
 
@@ -99,4 +175,8 @@ const primaryBtnStyle: React.CSSProperties = {
 const secondaryBtnStyle: React.CSSProperties = {
   background: "var(--surface-2)", color: "var(--foreground)", border: "1px solid var(--border)",
   borderRadius: 7, padding: "8px 14px", fontSize: 13, cursor: "pointer",
+};
+const inputStyle: React.CSSProperties = {
+  flex: 1, background: "var(--surface-2)", color: "var(--foreground)",
+  border: "1px solid var(--border)", borderRadius: 7, padding: "8px 12px", fontSize: 13,
 };

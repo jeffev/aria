@@ -1,15 +1,31 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createAriaModel } from "@/lib/gemini";
+import { getAuthenticatedUserId, unauthorized } from "@/lib/api-auth";
+import { getGeminiKey } from "@/lib/user-ai-key";
+import { isOverItemLimit, itemLimitMessage, trimChatHistory, type ItemKind } from "@/lib/demo";
 import { Content } from "@google/generative-ai";
 
-// ─── Executores das funções que a ARIA pode chamar ───────────────────────────
+async function executarFuncao(
+  name: string,
+  args: Record<string, unknown>,
+  userId: string
+): Promise<Record<string, unknown>> {
+  const kindByFunction: Record<string, ItemKind> = {
+    criar_evento: "event",
+    criar_tarefa: "task",
+    criar_nota: "note",
+  };
+  const kind = kindByFunction[name];
+  if (kind && (await isOverItemLimit(kind, userId))) {
+    return { ok: false, error: itemLimitMessage() };
+  }
 
-async function executarFuncao(name: string, args: Record<string, unknown>): Promise<Record<string, unknown>> {
   switch (name) {
     case "criar_evento": {
       const event = await prisma.event.create({
         data: {
+          userId,
           title: args.title as string,
           description: (args.description as string) ?? null,
           startAt: new Date(args.startAt as string),
@@ -24,6 +40,7 @@ async function executarFuncao(name: string, args: Record<string, unknown>): Prom
     case "criar_tarefa": {
       const task = await prisma.task.create({
         data: {
+          userId,
           title: args.title as string,
           description: (args.description as string) ?? null,
           priority: (args.priority as "LOW" | "MEDIUM" | "HIGH") ?? "MEDIUM",
@@ -36,6 +53,7 @@ async function executarFuncao(name: string, args: Record<string, unknown>): Prom
     case "criar_nota": {
       const note = await prisma.note.create({
         data: {
+          userId,
           title: args.title as string,
           content: (args.content as string) ?? "",
         },
@@ -48,20 +66,30 @@ async function executarFuncao(name: string, args: Record<string, unknown>): Prom
   }
 }
 
-// ─── POST /api/gemini ─────────────────────────────────────────────────────────
-
 export async function POST(request: Request) {
+  const userId = await getAuthenticatedUserId(request);
+  if (!userId) return unauthorized();
+
+  const apiKey = await getGeminiKey(userId);
+  if (!apiKey) {
+    return NextResponse.json(
+      {
+        error: "Configure sua chave do Gemini em Configurações para conversar com a ARIA.",
+        reply: "Para conversar comigo, cadastre sua chave gratuita do Gemini em Configurações (aistudio.google.com/apikey).",
+      },
+      { status: 402 }
+    );
+  }
+
   const { message, timezone } = await request.json();
   if (!message?.trim()) {
     return NextResponse.json({ error: "message é obrigatório" }, { status: 400 });
   }
 
-  // Timezone do browser do usuário (ex: "America/Sao_Paulo", offset "-03:00")
   const tz = timezone ?? "America/Sao_Paulo";
   const now = new Date();
   const tzOffset = (() => {
     try {
-      // Calcula o offset do timezone em horas e formata como +HH:MM ou -HH:MM
       const formatter = new Intl.DateTimeFormat("en", { timeZone: tz, timeZoneName: "shortOffset" });
       const parts = formatter.formatToParts(now);
       return parts.find((p) => p.type === "timeZoneName")?.value ?? "UTC";
@@ -70,15 +98,21 @@ export async function POST(request: Request) {
     }
   })();
 
-  // Contexto do usuário
   const [tasks, events] = await Promise.all([
-    prisma.task.findMany({ where: { done: false }, orderBy: [{ priority: "desc" }, { dueDate: "asc" }], take: 10 }),
-    prisma.event.findMany({ where: { startAt: { gte: new Date() } }, orderBy: { startAt: "asc" }, take: 10 }),
+    prisma.task.findMany({
+      where: { userId, done: false },
+      orderBy: [{ priority: "desc" }, { dueDate: "asc" }],
+      take: 10,
+    }),
+    prisma.event.findMany({
+      where: { userId, startAt: { gte: new Date() } },
+      orderBy: { startAt: "asc" },
+      take: 10,
+    }),
   ]);
 
   const todayStr = now.toLocaleDateString("pt-BR", { timeZone: tz, weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
-  // Data/hora local do usuário formatada com offset para que o Gemini gere ISOs corretos
   const localISOWithOffset = new Intl.DateTimeFormat("sv-SE", {
     timeZone: tz,
     year: "numeric", month: "2-digit", day: "2-digit",
@@ -113,8 +147,8 @@ ${taskLines}
 PRÓXIMOS EVENTOS:
 ${eventLines}`;
 
-  // Histórico de conversa para manter contexto
   const history = await prisma.aiMessage.findMany({
+    where: { userId },
     orderBy: { createdAt: "desc" },
     take: 20,
   });
@@ -124,8 +158,7 @@ ${eventLines}`;
     parts: [{ text: m.content }],
   }));
 
-  // Inicia o chat com o modelo que tem function calling
-  const model = createAriaModel();
+  const model = createAriaModel(apiKey);
   const chat = model.startChat({
     history: [
       { role: "user", parts: [{ text: systemPrompt }] },
@@ -134,50 +167,55 @@ ${eventLines}`;
     ],
   });
 
-  // Envia a mensagem do usuário
-  let result = await chat.sendMessage(message);
-  let response = result.response;
-
-  // Loop de function calling — Gemini pode encadear múltiplas chamadas
   const actionsExecuted: string[] = [];
+  let reply: string;
+  try {
+    let result = await chat.sendMessage(message);
+    let response = result.response;
 
-  while (response.functionCalls()?.length) {
-    const calls = response.functionCalls()!;
-    const functionResults = await Promise.all(
-      calls.map(async (call) => {
-        const output = await executarFuncao(call.name, call.args as Record<string, unknown>);
-        actionsExecuted.push(call.name);
-        return {
-          functionResponse: {
-            name: call.name,
-            response: output,
-          },
-        };
-      })
+    while (response.functionCalls()?.length) {
+      const calls = response.functionCalls()!;
+      const functionResults = await Promise.all(
+        calls.map(async (call) => {
+          const output = await executarFuncao(call.name, call.args as Record<string, unknown>, userId);
+          actionsExecuted.push(call.name);
+          return { functionResponse: { name: call.name, response: output } };
+        })
+      );
+
+      result = await chat.sendMessage(functionResults);
+      response = result.response;
+    }
+
+    reply = response.text();
+  } catch (error) {
+    console.error("Gemini request failed:", error);
+    return NextResponse.json(
+      {
+        error: "Falha ao falar com o Gemini.",
+        reply: "Não consegui falar com o Gemini. Confira sua chave em Configurações e tente de novo.",
+      },
+      { status: 502 }
     );
-
-    // Devolve os resultados para o Gemini gerar a resposta em linguagem natural
-    result = await chat.sendMessage(functionResults);
-    response = result.response;
   }
 
-  const reply = response.text();
-
-  // Persiste a conversa
   await prisma.aiMessage.createMany({
     data: [
-      { role: "user", content: message },
-      { role: "assistant", content: reply },
+      { userId, role: "user", content: message },
+      { userId, role: "assistant", content: reply },
     ],
   });
+  await trimChatHistory(userId);
 
   return NextResponse.json({ reply, actionsExecuted });
 }
 
-// ─── GET /api/gemini — histórico de mensagens ────────────────────────────────
+export async function GET(request: Request) {
+  const userId = await getAuthenticatedUserId(request);
+  if (!userId) return unauthorized();
 
-export async function GET() {
   const messages = await prisma.aiMessage.findMany({
+    where: { userId },
     orderBy: { createdAt: "asc" },
     take: 50,
   });
