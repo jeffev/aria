@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getAuthenticatedUserId, unauthorized } from "@/lib/api-auth";
 
 export async function GET(request: Request) {
+  const userId = await getAuthenticatedUserId(request);
+  if (!userId) return unauthorized();
+
   const { searchParams } = new URL(request.url);
   const q = searchParams.get("q")?.trim();
 
@@ -13,17 +17,17 @@ export async function GET(request: Request) {
 
   const [tasks, events, notes] = await Promise.all([
     prisma.task.findMany({
-      where: { OR: [{ title: contains }, { description: contains }] },
+      where: { userId, OR: [{ title: contains }, { description: contains }] },
       orderBy: { createdAt: "desc" },
       take: 5,
     }),
     prisma.event.findMany({
-      where: { OR: [{ title: contains }, { description: contains }] },
+      where: { userId, OR: [{ title: contains }, { description: contains }] },
       orderBy: { startAt: "desc" },
       take: 5,
     }),
     prisma.note.findMany({
-      where: { OR: [{ title: contains }, { content: contains }] },
+      where: { userId, OR: [{ title: contains }, { content: contains }] },
       orderBy: { updatedAt: "desc" },
       take: 5,
     }),
