@@ -1,7 +1,17 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { fetchCalendarEvents, getAccessToken } from "@/lib/google-calendar";
+import { decryptSecret } from "@/lib/secret-box";
 import { auth } from "@/auth";
+
+// Tokens salvos antes da cifra ficaram em texto puro; continuam valendo.
+function readRefreshToken(value: string): string {
+  try {
+    return decryptSecret(value);
+  } catch {
+    return value;
+  }
+}
 
 export async function POST() {
   const session = await auth();
@@ -17,7 +27,7 @@ export async function POST() {
     return NextResponse.json({ error: "Google Calendar não conectado" }, { status: 400 });
   }
 
-  const accessToken = await getAccessToken(setting.value);
+  const accessToken = await getAccessToken(readRefreshToken(setting.value));
   const googleEvents = await fetchCalendarEvents(accessToken, 14);
 
   let synced = 0;

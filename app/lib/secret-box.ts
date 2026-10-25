@@ -3,7 +3,10 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes } from "crypt
 // Chaves de terceiros (ex.: Gemini) ficam cifradas no banco com AES-256-GCM.
 // A chave de cifra deriva do AUTH_SECRET, que já é segredo obrigatório do NextAuth.
 function cipherKey(): Buffer {
-  return createHash("sha256").update(process.env.AUTH_SECRET ?? "").digest();
+  const secret = process.env.AUTH_SECRET;
+  // Sem segredo a cifra usaria sha256(""), uma chave que qualquer um calcula.
+  if (!secret) throw new Error("AUTH_SECRET não configurado");
+  return createHash("sha256").update(secret).digest();
 }
 
 export function encryptSecret(plain: string): string {

@@ -4,7 +4,21 @@ import { createAriaModel } from "@/lib/gemini";
 import { getAuthenticatedUserId, unauthorized } from "@/lib/api-auth";
 import { getGeminiKey } from "@/lib/user-ai-key";
 import { isOverItemLimit, itemLimitMessage, trimChatHistory, type ItemKind } from "@/lib/demo";
+import { isRateLimited } from "@/lib/rate-limit";
 import { Content } from "@google/generative-ai";
+
+const MAX_MESSAGE_LENGTH = 4000;
+const PRIORITIES = ["LOW", "MEDIUM", "HIGH"] as const;
+
+function validTimezone(tz: unknown): string {
+  if (typeof tz !== "string") return "America/Sao_Paulo";
+  try {
+    new Intl.DateTimeFormat("en", { timeZone: tz });
+    return tz;
+  } catch {
+    return "America/Sao_Paulo";
+  }
+}
 
 async function executarFuncao(
   name: string,
@@ -43,7 +57,7 @@ async function executarFuncao(
           userId,
           title: args.title as string,
           description: (args.description as string) ?? null,
-          priority: (args.priority as "LOW" | "MEDIUM" | "HIGH") ?? "MEDIUM",
+          priority: PRIORITIES.find((p) => p === args.priority) ?? "MEDIUM",
           dueDate: args.dueDate ? new Date(args.dueDate as string) : null,
         },
       });
@@ -69,6 +83,12 @@ async function executarFuncao(
 export async function POST(request: Request) {
   const userId = await getAuthenticatedUserId(request);
   if (!userId) return unauthorized();
+  if (isRateLimited(`gemini:${userId}`, 20, 60 * 1000)) {
+    return NextResponse.json(
+      { error: "Muitas mensagens seguidas.", reply: "Calma aí: espere um minuto e tente de novo." },
+      { status: 429 }
+    );
+  }
 
   const apiKey = await getGeminiKey(userId);
   if (!apiKey) {
@@ -82,11 +102,18 @@ export async function POST(request: Request) {
   }
 
   const { message, timezone } = await request.json();
-  if (!message?.trim()) {
+  if (typeof message !== "string" || !message.trim()) {
     return NextResponse.json({ error: "message é obrigatório" }, { status: 400 });
   }
+  if (message.length > MAX_MESSAGE_LENGTH) {
+    return NextResponse.json(
+      { error: "Mensagem longa demais.", reply: `Mande mensagens de até ${MAX_MESSAGE_LENGTH} caracteres.` },
+      { status: 400 }
+    );
+  }
 
-  const tz = timezone ?? "America/Sao_Paulo";
+  // Vai para Intl e para o prompt: só aceita fuso que o Intl reconhece.
+  const tz = validTimezone(timezone);
   const now = new Date();
   const tzOffset = (() => {
     try {

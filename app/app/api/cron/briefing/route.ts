@@ -1,12 +1,9 @@
 import { NextResponse } from "next/server";
+import { isCronAuthorized } from "@/lib/api-auth";
 
 // GET /api/cron/briefing — roda às 08h nos dias úteis (Vercel Cron)
 export async function GET(request: Request) {
-  const authHeader = request.headers.get("authorization");
-  if (
-    process.env.NODE_ENV === "production" &&
-    authHeader !== `Bearer ${process.env.CRON_SECRET}`
-  ) {
+  if (!isCronAuthorized(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

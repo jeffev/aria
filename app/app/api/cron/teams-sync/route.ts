@@ -1,14 +1,10 @@
 import { NextResponse } from "next/server";
+import { isCronAuthorized } from "@/lib/api-auth";
 
 // Chamado pelo Vercel Cron (cloud) ou manualmente em dev
 // GET /api/cron/teams-sync
 export async function GET(request: Request) {
-  // Protege a rota de chamadas externas não autorizadas (cloud)
-  const authHeader = request.headers.get("authorization");
-  if (
-    process.env.NODE_ENV === "production" &&
-    authHeader !== `Bearer ${process.env.CRON_SECRET}`
-  ) {
+  if (!isCronAuthorized(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

@@ -8,6 +8,8 @@ export const GUEST_EMAIL_DOMAIN = "visitante.aria.demo";
 const GUEST_TTL_HOURS = 24;
 const MAX_ITEMS_PER_KIND = 50;
 const MAX_STORED_MESSAGES = 40;
+// Teto de contas de visitante vivas ao mesmo tempo, mesmo vindo de IPs diferentes.
+const MAX_LIVE_GUESTS = 300;
 
 export type ItemKind = "task" | "event" | "note";
 
@@ -52,6 +54,10 @@ export async function purgeExpiredGuests(): Promise<number> {
 
 export async function createGuestUser() {
   await purgeExpiredGuests();
+  const liveGuests = await prisma.user.count({
+    where: { email: { endsWith: `@${GUEST_EMAIL_DOMAIN}` } },
+  });
+  if (liveGuests >= MAX_LIVE_GUESTS) return null;
   const suffix = crypto.randomUUID().slice(0, 8);
   return prisma.user.create({
     data: { name: "Visitante", email: `visitante-${suffix}@${GUEST_EMAIL_DOMAIN}` },

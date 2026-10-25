@@ -11,7 +11,14 @@ export async function getGeminiKey(userId: string): Promise<string | null> {
   const setting = await prisma.setting.findUnique({
     where: { userId_key: { userId, key: SETTING_KEY } },
   });
-  if (setting) return decryptSecret(setting.value);
+  if (setting) {
+    try {
+      return decryptSecret(setting.value);
+    } catch {
+      // AUTH_SECRET trocado ou valor corrompido: a pessoa cadastra a chave de novo.
+      return null;
+    }
+  }
   if (process.env.DEMO_MODE === "true") return null;
   return process.env.GEMINI_API_KEY || null;
 }

@@ -2,10 +2,18 @@ const GOOGLE_BASE = "https://www.googleapis.com";
 const GOOGLE_AUTH = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN = "https://oauth2.googleapis.com/token";
 
-export function getAuthUrl(redirectUri: string) {
+export const GOOGLE_STATE_COOKIE = "aria_google_oauth_state";
+
+/** A integração só existe com OAuth configurado e fora da demo pública. */
+export function isGoogleCalendarEnabled(): boolean {
+  return process.env.DEMO_MODE !== "true" && !!process.env.GOOGLE_CLIENT_ID && !!process.env.GOOGLE_CLIENT_SECRET;
+}
+
+export function getAuthUrl(redirectUri: string, state: string) {
   const params = new URLSearchParams({
     client_id: process.env.GOOGLE_CLIENT_ID!,
     redirect_uri: redirectUri,
+    state,
     response_type: "code",
     scope: "https://www.googleapis.com/auth/calendar.readonly",
     access_type: "offline",
