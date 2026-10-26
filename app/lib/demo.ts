@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { seedGuestWorkspace } from "@/lib/demo-seed";
 
 // Demo pública: visitantes entram como convidados descartáveis e o banco
 // gratuito fica limitado por usuário e por tempo de vida da conta.
@@ -59,7 +60,10 @@ export async function createGuestUser() {
   });
   if (liveGuests >= MAX_LIVE_GUESTS) return null;
   const suffix = crypto.randomUUID().slice(0, 8);
-  return prisma.user.create({
+  const user = await prisma.user.create({
     data: { name: "Visitante", email: `visitante-${suffix}@${GUEST_EMAIL_DOMAIN}` },
   });
+  // A agenda e o dashboard não abrem vazios: o visitante já vê uma semana de trabalho.
+  await seedGuestWorkspace(user.id);
+  return user;
 }
