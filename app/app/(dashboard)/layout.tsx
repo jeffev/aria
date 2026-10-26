@@ -9,7 +9,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {process.env.NEXT_PUBLIC_DEMO_MODE === "true" && (
           <p style={demoBannerStyle}>
             Demonstração: sua conta de visitante e tudo o que você criar são apagados em 24 horas.
-            Para usar o chat, cadastre sua chave do Gemini em Configurações.
+            O chat tem um limite diário de mensagens; para usar sem limite, cadastre sua chave do Gemini em Configurações.
           </p>
         )}
         {children}

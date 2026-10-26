@@ -90,12 +90,18 @@ export default function ConfiguracoesPage() {
 
 function GeminiKeySection() {
   const [configured, setConfigured] = useState<boolean | null>(null);
+  const [demoRemaining, setDemoRemaining] = useState<number | null>(null);
   const [apiKey, setApiKey] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
 
   useEffect(() => {
-    fetch("/api/configuracoes/gemini").then((r) => r.json()).then((d) => setConfigured(d.configured));
+    fetch("/api/configuracoes/gemini")
+      .then((r) => r.json())
+      .then((d) => {
+        setConfigured(d.configured);
+        setDemoRemaining(d.demoAi?.remaining ?? null);
+      });
   }, []);
 
   async function save(method: "PUT" | "DELETE") {
@@ -122,9 +128,15 @@ function GeminiKeySection() {
       <p style={{ margin: "0 0 12px", fontSize: 14 }}>
         Status:{" "}
         <span style={{ color: configured ? "var(--success)" : "var(--foreground-muted)", fontWeight: 500 }}>
-          {configured === null ? "Verificando..." : configured ? "Chave configurada" : "Sem chave"}
+          {configured === null ? "Verificando..." : configured ? "Chave configurada" : demoRemaining !== null ? "Usando a chave da demonstração" : "Sem chave"}
         </span>
       </p>
+      {!configured && demoRemaining !== null && (
+        <p style={{ margin: "0 0 12px", fontSize: 12, color: "var(--foreground-muted)" }}>
+          Na demonstração você pode mandar {demoRemaining} {demoRemaining === 1 ? "mensagem" : "mensagens"} hoje sem cadastrar nada.
+          Com a sua chave não há limite.
+        </p>
+      )}
       <p style={{ margin: "0 0 12px", fontSize: 12, color: "var(--foreground-muted)" }}>
         O chat usa a sua própria chave do Gemini, guardada cifrada. Gere uma grátis em{" "}
         <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" style={{ color: "var(--accent)" }}>

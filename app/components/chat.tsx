@@ -29,6 +29,8 @@ export default function Chat() {
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
+  // Mensagens restantes com a chave emprestada da demo; null quando a pessoa usa a própria chave.
+  const [demoRemaining, setDemoRemaining] = useState<number | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
@@ -38,6 +40,10 @@ export default function Chat() {
         ("SpeechRecognition" in window || "webkitSpeechRecognition" in window)
     );
     fetchHistory();
+    fetch("/api/configuracoes/gemini")
+      .then((r) => r.json())
+      .then((d) => setDemoRemaining(d.demoAi?.remaining ?? null))
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -81,6 +87,8 @@ export default function Chat() {
       actions: data.actionsExecuted ?? [],
     };
     setMessages((prev) => [...prev.slice(0, -1), tempUser, tempAssistant]);
+    if (data.demoAi) setDemoRemaining(data.demoAi.remaining);
+    else if (res.status === 429 && demoRemaining !== null) setDemoRemaining(0);
     setLoading(false);
   }
 
@@ -135,6 +143,14 @@ export default function Chat() {
         )}
         <div ref={bottomRef} />
       </div>
+
+      {demoRemaining !== null && (
+        <p style={{ margin: "0 0 8px", fontSize: 11, color: "var(--foreground-muted)" }}>
+          {demoRemaining > 0
+            ? `IA liberada na demonstração: ${demoRemaining} ${demoRemaining === 1 ? "mensagem restante" : "mensagens restantes"} hoje.`
+            : "As mensagens gratuitas de hoje acabaram. Cadastre sua chave do Gemini em Configurações para continuar."}
+        </p>
+      )}
 
       {/* Input */}
       <div style={{ display: "flex", gap: 8, borderTop: "1px solid var(--border)", paddingTop: 16 }}>

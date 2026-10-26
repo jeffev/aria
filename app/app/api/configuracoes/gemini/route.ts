@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedUserId, unauthorized } from "@/lib/api-auth";
-import { deleteGeminiKey, hasGeminiKey, saveGeminiKey } from "@/lib/user-ai-key";
+import { deleteGeminiKey, demoAiStatus, hasGeminiKey, saveGeminiKey } from "@/lib/user-ai-key";
 
 // Chaves do AI Studio começam com "AIza"; recusar outra coisa evita guardar lixo.
 const GEMINI_KEY_PATTERN = /^AIza[0-9A-Za-z_-]{30,}$/;
@@ -8,7 +8,7 @@ const GEMINI_KEY_PATTERN = /^AIza[0-9A-Za-z_-]{30,}$/;
 export async function GET(request: Request) {
   const userId = await getAuthenticatedUserId(request);
   if (!userId) return unauthorized();
-  return NextResponse.json({ configured: await hasGeminiKey(userId) });
+  return NextResponse.json({ configured: await hasGeminiKey(userId), demoAi: await demoAiStatus(userId) });
 }
 
 export async function PUT(request: Request) {

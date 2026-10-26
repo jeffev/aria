@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createAriaModel } from "@/lib/gemini";
 import { getAuthenticatedUserId, unauthorized } from "@/lib/api-auth";
-import { getGeminiKey } from "@/lib/user-ai-key";
+import { resolveGeminiKey } from "@/lib/user-ai-key";
+import { consumeDemoAi, demoAiExhaustedReply, demoAiRemaining } from "@/lib/demo-ai-quota";
 import { isOverItemLimit, itemLimitMessage, trimChatHistory, type ItemKind } from "@/lib/demo";
 import { isRateLimited } from "@/lib/rate-limit";
 import { Content } from "@google/generative-ai";
@@ -90,8 +91,8 @@ export async function POST(request: Request) {
     );
   }
 
-  const apiKey = await getGeminiKey(userId);
-  if (!apiKey) {
+  const resolved = await resolveGeminiKey(userId);
+  if (!resolved) {
     return NextResponse.json(
       {
         error: "Configure sua chave do Gemini em Configurações para conversar com a ARIA.",
@@ -100,6 +101,13 @@ export async function POST(request: Request) {
       { status: 402 }
     );
   }
+  if (resolved.source === "demo" && !consumeDemoAi(userId)) {
+    return NextResponse.json(
+      { error: "Cota de IA da demonstração esgotada.", reply: demoAiExhaustedReply() },
+      { status: 429 }
+    );
+  }
+  const apiKey = resolved.apiKey;
 
   const { message, timezone } = await request.json();
   if (typeof message !== "string" || !message.trim()) {
@@ -234,7 +242,11 @@ ${eventLines}`;
   });
   await trimChatHistory(userId);
 
-  return NextResponse.json({ reply, actionsExecuted });
+  return NextResponse.json({
+    reply,
+    actionsExecuted,
+    demoAi: resolved.source === "demo" ? { remaining: demoAiRemaining(userId) } : null,
+  });
 }
 
 export async function GET(request: Request) {
