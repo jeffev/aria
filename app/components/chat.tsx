@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { signOut } from "next-auth/react";
 
 interface Message {
   id: string;
@@ -52,6 +53,10 @@ export default function Chat() {
 
   async function fetchHistory() {
     const res = await fetch("/api/gemini");
+    if (res.status === 401) {
+      signOut({ callbackUrl: "/login" });
+      return;
+    }
     setMessages(await res.json());
   }
 
@@ -77,6 +82,11 @@ export default function Chat() {
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       }),
     });
+    if (res.status === 401) {
+      // Sessão de um visitante já apagado: recomeça do login.
+      signOut({ callbackUrl: "/login" });
+      return;
+    }
     const data = await res.json();
 
     const tempAssistant: Message = {

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 import GlobalSearch from "./search";
 import WeatherWidget from "./weather";
 
@@ -74,8 +75,15 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div style={{ padding: "16px 20px", borderTop: "1px solid var(--border)", fontSize: 11, color: "var(--foreground-muted)" }}>
-        ARIA v0.1.0
+      <div style={{ padding: "16px 20px", borderTop: "1px solid var(--border)", fontSize: 11, color: "var(--foreground-muted)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span>ARIA v0.1.0</span>
+        <button
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          title="Sair da conta"
+          style={{ background: "none", border: "none", color: "var(--foreground-muted)", cursor: "pointer", fontSize: 11, padding: 0 }}
+        >
+          Sair
+        </button>
       </div>
     </aside>
   );

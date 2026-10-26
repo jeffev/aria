@@ -27,7 +27,12 @@ export async function getAuthenticatedUserId(
   }
 
   const session = await auth();
-  return session?.user?.id ?? null;
+  const userId = session?.user?.id ?? null;
+  if (!userId) return null;
+  // Na demo o visitante é apagado em 24 h, mas o cookie de sessão sobrevive:
+  // sem esta checagem o chat tentaria gravar para um usuário que não existe.
+  if (IS_DEMO && (await prisma.user.count({ where: { id: userId } })) === 0) return null;
+  return userId;
 }
 
 export function unauthorized() {
