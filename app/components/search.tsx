@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
 
 interface SearchResults {
   tasks: { id: string; title: string; done: boolean }[];
@@ -9,7 +10,9 @@ interface SearchResults {
   notes: { id: string; title: string; content: string }[];
 }
 
-export default function GlobalSearch() {
+// `compact` é o botão de lupa da barra do celular. Só a instância da barra
+// lateral escuta o Ctrl+K, senão as duas abririam juntas.
+export default function GlobalSearch({ compact = false }: { compact?: boolean }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResults | null>(null);
@@ -19,6 +22,7 @@ export default function GlobalSearch() {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    if (compact) return;
     function onKey(e: KeyboardEvent) {
       if ((e.ctrlKey || e.metaKey) && e.key === "k") {
         e.preventDefault();
@@ -28,7 +32,7 @@ export default function GlobalSearch() {
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [compact]);
 
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 50);
@@ -54,6 +58,12 @@ export default function GlobalSearch() {
 
   const total = results ? results.tasks.length + results.events.length + results.notes.length : 0;
 
+  if (!open && compact) return (
+    <button onClick={() => setOpen(true)} aria-label="Pesquisar" className="mobile-topbar-btn">
+      🔍
+    </button>
+  );
+
   if (!open) return (
     <button
       onClick={() => setOpen(true)}
@@ -70,13 +80,15 @@ export default function GlobalSearch() {
     </button>
   );
 
-  return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: 80 }}>
+  // Portal no body: aberto a partir da barra fixa do celular, o modal ficaria
+  // preso no empilhamento dela, e a barra de abas passaria por cima.
+  return createPortal(
+    <div style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: "max(80px, calc(16px + env(safe-area-inset-top)))" }}>
       {/* Backdrop */}
       <div onClick={() => setOpen(false)} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }} />
 
       {/* Modal */}
-      <div style={{ position: "relative", width: 560, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, boxShadow: "0 20px 60px rgba(0,0,0,0.5)", overflow: "hidden" }}>
+      <div style={{ position: "relative", width: "min(560px, calc(100vw - 32px))", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, boxShadow: "0 20px 60px rgba(0,0,0,0.5)", overflow: "hidden" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", borderBottom: "1px solid var(--border)" }}>
           <span>🔍</span>
           <input
@@ -87,11 +99,13 @@ export default function GlobalSearch() {
             style={{ flex: 1, background: "transparent", border: "none", fontSize: 15, color: "var(--foreground)", outline: "none" }}
           />
           {loading && <span style={{ fontSize: 11, color: "var(--foreground-muted)" }}>Buscando...</span>}
-          <kbd onClick={() => setOpen(false)} style={{ fontSize: 11, color: "var(--foreground-muted)", cursor: "pointer" }}>Esc</kbd>
+          <button onClick={() => setOpen(false)} aria-label="Fechar busca" style={{ background: "none", border: "none", fontSize: 11, color: "var(--foreground-muted)", cursor: "pointer", padding: 4 }}>
+            {compact ? "Fechar" : "Esc"}
+          </button>
         </div>
 
         {results && (
-          <div style={{ maxHeight: 400, overflowY: "auto" }}>
+          <div style={{ maxHeight: "min(400px, 60vh)", overflowY: "auto" }}>
             {total === 0 ? (
               <p style={{ padding: 20, color: "var(--foreground-muted)", fontSize: 13, textAlign: "center" }}>
                 Nenhum resultado para "{query}"
@@ -124,7 +138,8 @@ export default function GlobalSearch() {
           </p>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

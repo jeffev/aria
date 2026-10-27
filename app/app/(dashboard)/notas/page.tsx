@@ -79,9 +79,9 @@ export default function NotasPage() {
   }
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: 16, height: "calc(100vh - 64px)" }}>
+    <div className="notes-grid" data-editing={selected ? "true" : "false"}>
       {/* Sidebar de notas */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div className="notes-list" style={{ display: "flex", flexDirection: "column", gap: 8, minHeight: 0 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
           <h1 style={{ fontSize: 22, fontWeight: 600, margin: 0 }}>Notas</h1>
           <button onClick={createNote} style={primaryBtnStyle}>+ Nova</button>
@@ -116,10 +116,10 @@ export default function NotasPage() {
               </p>
               <div style={{ display: "flex", gap: 4, position: "absolute", top: 8, right: 8, opacity: 0 }}
                 className="note-actions">
-                <button onClick={(e) => togglePin(note, e)} style={iconBtnStyle} title={note.pinned ? "Desafixar" : "Fixar"}>
+                <button onClick={(e) => togglePin(note, e)} className="touch-target" style={iconBtnStyle} title={note.pinned ? "Desafixar" : "Fixar"} aria-label={note.pinned ? "Desafixar" : "Fixar"}>
                   {note.pinned ? "📌" : "📍"}
                 </button>
-                <button onClick={(e) => deleteNote(note, e)} style={{ ...iconBtnStyle, color: "var(--danger)" }} title="Excluir">✕</button>
+                <button onClick={(e) => deleteNote(note, e)} className="touch-target" style={{ ...iconBtnStyle, color: "var(--danger)" }} title="Excluir" aria-label="Excluir">✕</button>
               </div>
             </div>
           ))}
@@ -127,7 +127,7 @@ export default function NotasPage() {
       </div>
 
       {/* Editor */}
-      <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: 24, display: "flex", flexDirection: "column" }}>
+      <div className="notes-editor" style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "clamp(16px, 4vw, 24px)", display: "flex", flexDirection: "column", minHeight: 0 }}>
         {!selected ? (
           <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--foreground-muted)", fontSize: 14 }}>
             Selecione ou crie uma nota
@@ -135,12 +135,20 @@ export default function NotasPage() {
         ) : (
           <>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <button
+                onClick={() => setSelected(null)}
+                className="mobile-only"
+                aria-label="Voltar para a lista de notas"
+                style={{ background: "none", border: "none", color: "var(--accent)", fontSize: 14, padding: "8px 12px 8px 0", cursor: "pointer" }}
+              >
+                ← Notas
+              </button>
               <input
                 value={selected.title}
                 onChange={(e) => handleChange("title", e.target.value)}
                 placeholder="Título da nota"
                 style={{
-                  flex: 1, background: "transparent", border: "none", fontSize: 20,
+                  flex: 1, minWidth: 0, background: "transparent", border: "none", fontSize: 20,
                   fontWeight: 600, color: "var(--foreground)", outline: "none",
                 }}
               />

@@ -46,6 +46,10 @@ const corsHeaders: Record<string, string> = {
 
 export const config = {
   // Arquivos estáticos (ícones e logos de /public) ficam de fora: a tela de
-  // login usa alguns antes de existir sessão.
-  matcher: ["/((?!_next/static|_next/image|.*\\.(?:svg|ico|png|jpg|webp)$).*)"],
+  // login usa alguns antes de existir sessão. O manifest, o service worker e a
+  // página offline também: o navegador os busca sem cookie de sessão, e um
+  // redirecionamento para /login ali impede a instalação do app.
+  matcher: [
+    "/((?!_next/static|_next/image|manifest\\.webmanifest$|sw\\.js$|offline\\.html$|.*\\.(?:svg|ico|png|jpg|webp)$).*)",
+  ],
 };

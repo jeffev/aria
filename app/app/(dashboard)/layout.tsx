@@ -1,11 +1,16 @@
 import Sidebar from "@/components/sidebar";
+import MobileNav from "@/components/mobile-nav";
 import EventNotifications from "@/components/event-notifications";
+import RegisterServiceWorker from "@/components/register-service-worker";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <>
-      <Sidebar />
-      <main style={{ flex: 1, padding: 32, overflowY: "auto", minHeight: "100vh" }}>
+    <div className="app-shell">
+      <div className="desktop-only" style={{ display: "flex" }}>
+        <Sidebar />
+      </div>
+      <MobileNav />
+      <main className="app-main">
         {process.env.NEXT_PUBLIC_DEMO_MODE === "true" && (
           <p style={demoBannerStyle}>
             Demonstração: sua conta de visitante e tudo o que você criar são apagados em 24 horas.
@@ -15,7 +20,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {children}
       </main>
       <EventNotifications />
-    </>
+      <RegisterServiceWorker />
+    </div>
   );
 }
 

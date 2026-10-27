@@ -40,7 +40,7 @@ export default function ConfiguracoesPage() {
       {/* Google Calendar */}
       {!IS_DEMO && (
         <Section title="Google Calendar">
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
             <div>
               <p style={{ margin: 0, fontSize: 14 }}>
                 Status:{" "}
@@ -144,7 +144,7 @@ function GeminiKeySection() {
         </a>
         .
       </p>
-      <div style={{ display: "flex", gap: 8 }}>
+      <div className="inline-form">
         <input
           type="password"
           value={apiKey}
@@ -172,7 +172,7 @@ function GeminiKeySection() {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: 24, marginBottom: 16 }}>
+    <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "clamp(16px, 4vw, 24px)", marginBottom: 16 }}>
       <h2 style={{ margin: "0 0 16px", fontSize: 15, fontWeight: 600 }}>{title}</h2>
       {children}
     </div>
@@ -189,6 +189,6 @@ const secondaryBtnStyle: React.CSSProperties = {
   borderRadius: 7, padding: "8px 14px", fontSize: 13, cursor: "pointer",
 };
 const inputStyle: React.CSSProperties = {
-  flex: 1, background: "var(--surface-2)", color: "var(--foreground)",
+  flex: 1, minWidth: 0, background: "var(--surface-2)", color: "var(--foreground)",
   border: "1px solid var(--border)", borderRadius: 7, padding: "8px 12px", fontSize: 13,
 };

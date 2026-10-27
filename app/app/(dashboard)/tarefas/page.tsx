@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 
 type Priority = "LOW" | "MEDIUM" | "HIGH";
 
@@ -47,6 +47,13 @@ export default function TarefasPage() {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [form, setForm] = useState<TaskForm>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const formRef = useRef<HTMLDivElement>(null);
+
+  // No celular a lista é longa e o formulário abre no topo, fora da vista de
+  // quem tocou num item lá embaixo.
+  useEffect(() => {
+    if (showForm) formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [showForm, editingTask]);
 
   const fetchTasks = useCallback(async () => {
     setLoading(true);
@@ -125,7 +132,7 @@ export default function TarefasPage() {
   return (
     <div>
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+      <div className="page-header">
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 600, margin: 0 }}>Tarefas</h1>
           <p style={{ color: "var(--foreground-muted)", fontSize: 14, margin: "4px 0 0" }}>
@@ -136,7 +143,7 @@ export default function TarefasPage() {
       </div>
 
       {/* Filter tabs */}
-      <div style={{ display: "flex", gap: 4, marginBottom: 20, borderBottom: "1px solid var(--border)", paddingBottom: 1 }}>
+      <div style={{ display: "flex", gap: 4, marginBottom: 20, borderBottom: "1px solid var(--border)", paddingBottom: 1, overflowX: "auto" }}>
         {(["pending", "all", "done"] as const).map((f) => (
           <button
             key={f}
@@ -160,11 +167,11 @@ export default function TarefasPage() {
 
       {/* Form */}
       {showForm && (
-        <div style={{ background: "var(--surface)", border: "1px solid var(--accent)", borderRadius: 12, padding: 24, marginBottom: 20 }}>
+        <div ref={formRef} style={{ scrollMarginTop: 72, background: "var(--surface)", border: "1px solid var(--accent)", borderRadius: 12, padding: "clamp(16px, 4vw, 24px)", marginBottom: 20 }}>
           <h3 style={{ margin: "0 0 16px", fontSize: 15, fontWeight: 600 }}>
             {editingTask ? "Editar tarefa" : "Nova tarefa"}
           </h3>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+          <div className="form-grid-3">
             <div style={{ gridColumn: "1 / -1" }}>
               <Label>Título *</Label>
               <Input value={form.title} onChange={(v) => setForm((f) => ({ ...f, title: v }))} placeholder="Ex: Preparar relatório" autoFocus />
@@ -233,14 +240,12 @@ function TaskRow({ task, onToggle, onEdit, onDelete }: {
 
   return (
     <div
+      className="task-row"
       style={{
         background: "var(--surface)",
         border: "1px solid var(--border)",
         borderRadius: 10,
         padding: "14px 16px",
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
         opacity: task.done ? 0.6 : 1,
         transition: "opacity 0.15s",
       }}
@@ -248,6 +253,7 @@ function TaskRow({ task, onToggle, onEdit, onDelete }: {
       {/* Checkbox */}
       <button
         onClick={onToggle}
+        aria-label={task.done ? "Marcar como pendente" : "Marcar como concluída"}
         style={{
           width: 20,
           height: 20,
@@ -267,11 +273,11 @@ function TaskRow({ task, onToggle, onEdit, onDelete }: {
       </button>
 
       {/* Priority dot */}
-      <div style={{ width: 8, height: 8, borderRadius: "50%", background: PRIORITY_COLOR[task.priority], flexShrink: 0 }} />
+      <div style={{ width: 8, height: 8, borderRadius: "50%", background: PRIORITY_COLOR[task.priority], flexShrink: 0, alignSelf: "center" }} />
 
       {/* Content */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ margin: 0, fontSize: 14, fontWeight: 500, textDecoration: task.done ? "line-through" : "none" }}>
+        <p style={{ margin: 0, fontSize: 14, fontWeight: 500, textDecoration: task.done ? "line-through" : "none", overflowWrap: "anywhere" }}>
           {task.title}
         </p>
         {task.description && (
@@ -280,7 +286,7 @@ function TaskRow({ task, onToggle, onEdit, onDelete }: {
       </div>
 
       {/* Meta */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+      <div className="task-meta">
         <span style={{ fontSize: 11, color: "var(--foreground-muted)" }}>
           {PRIORITY_LABEL[task.priority]}
         </span>
@@ -290,9 +296,9 @@ function TaskRow({ task, onToggle, onEdit, onDelete }: {
           </span>
         )}
         {!task.done && (
-          <button onClick={onEdit} style={iconBtnStyle} title="Editar">✎</button>
+          <button onClick={onEdit} className="touch-target" style={iconBtnStyle} title="Editar" aria-label="Editar">✎</button>
         )}
-        <button onClick={onDelete} style={{ ...iconBtnStyle, color: "var(--danger)" }} title="Excluir">✕</button>
+        <button onClick={onDelete} className="touch-target" style={{ ...iconBtnStyle, color: "var(--danger)" }} title="Excluir" aria-label="Excluir">✕</button>
       </div>
     </div>
   );

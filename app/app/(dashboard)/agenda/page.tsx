@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 
 type EventSource = "MANUAL" | "TEAMS";
 type Recurrence = "NONE" | "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY";
@@ -102,6 +102,13 @@ export default function AgendaPage() {
   const [editingEvent, setEditingEvent] = useState<AgendaEvent | null>(null);
   const [form, setForm] = useState<EventForm>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const formRef = useRef<HTMLDivElement>(null);
+
+  // No celular a lista é longa e o formulário abre no topo, fora da vista de
+  // quem tocou num item lá embaixo.
+  useEffect(() => {
+    if (showForm) formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [showForm, editingEvent]);
 
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const weekEnd = addDays(weekStart, 6);
@@ -200,7 +207,7 @@ export default function AgendaPage() {
   return (
     <div>
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
+      <div className="page-header">
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 600, margin: 0 }}>Agenda</h1>
           <p style={{ color: "var(--foreground-muted)", fontSize: 14, margin: "4px 0 0" }}>
@@ -208,10 +215,14 @@ export default function AgendaPage() {
             {fmt(weekEnd, { day: "numeric", month: "long", year: "numeric" })}
           </p>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <NavBtn onClick={() => setWeekStart(addDays(weekStart, -7))}>← Semana anterior</NavBtn>
+        <div className="page-actions">
+          <NavBtn onClick={() => setWeekStart(addDays(weekStart, -7))} label="Semana anterior">
+            ←<span className="desktop-only"> Semana anterior</span>
+          </NavBtn>
           <NavBtn onClick={() => setWeekStart(startOfWeek(new Date()))}>Hoje</NavBtn>
-          <NavBtn onClick={() => setWeekStart(addDays(weekStart, 7))}>Próxima semana →</NavBtn>
+          <NavBtn onClick={() => setWeekStart(addDays(weekStart, 7))} label="Próxima semana">
+            <span className="desktop-only">Próxima semana </span>→
+          </NavBtn>
           <button onClick={() => openNewForm()} style={primaryBtnStyle}>
             + Novo evento
           </button>
@@ -221,18 +232,20 @@ export default function AgendaPage() {
       {/* Form */}
       {showForm && (
         <div
+          ref={formRef}
           style={{
+            scrollMarginTop: 72,
             background: "var(--surface)",
             border: "1px solid var(--accent)",
             borderRadius: 12,
-            padding: 24,
+            padding: "clamp(16px, 4vw, 24px)",
             marginBottom: 24,
           }}
         >
           <h3 style={{ margin: "0 0 16px", fontSize: 15, fontWeight: 600 }}>
             {editingEvent ? "Editar evento" : "Novo evento"}
           </h3>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div className="form-grid-2">
             <div style={{ gridColumn: "1 / -1" }}>
               <Label>Título *</Label>
               <Input
@@ -335,7 +348,7 @@ export default function AgendaPage() {
       )}
 
       {/* Week grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 8 }}>
+      <div className="week-grid">
         {weekDays.map((day) => {
           const isToday = isSameDay(day, today);
           const dayEvents = events.filter((ev) => isSameDay(new Date(ev.startAt), day));
@@ -343,6 +356,7 @@ export default function AgendaPage() {
           return (
             <div
               key={day.toISOString()}
+              className="week-day"
               style={{
                 background: isToday ? "var(--surface-2)" : "var(--surface)",
                 border: `1px solid ${isToday ? "var(--accent)" : "var(--border)"}`,
@@ -352,7 +366,7 @@ export default function AgendaPage() {
               }}
             >
               {/* Day header */}
-              <div style={{ marginBottom: 8 }}>
+              <div className="week-day-header" style={{ marginBottom: 8 }}>
                 <p style={{ margin: 0, fontSize: 11, color: "var(--foreground-muted)", textTransform: "uppercase", letterSpacing: 1 }}>
                   {fmt(day, { weekday: "short" })}
                 </p>
@@ -362,6 +376,7 @@ export default function AgendaPage() {
               </div>
 
               {/* Events */}
+              <div className="week-day-events">
               {loading ? (
                 <div style={{ height: 20, background: "var(--border)", borderRadius: 4, opacity: 0.5 }} />
               ) : (
@@ -392,6 +407,7 @@ export default function AgendaPage() {
                   </button>
                 </>
               )}
+              </div>
             </div>
           );
         })}
@@ -428,8 +444,8 @@ function EventChip({
         <span style={{ fontWeight: 500, lineHeight: 1.3, flex: 1 }}>{event.title}</span>
         {!isTeams && (
           <div style={{ display: "flex", gap: 4, marginLeft: 4 }}>
-            <ActionBtn onClick={onEdit}>✎</ActionBtn>
-            <ActionBtn onClick={onDelete}>✕</ActionBtn>
+            <ActionBtn onClick={onEdit} label="Editar evento">✎</ActionBtn>
+            <ActionBtn onClick={onDelete} label="Excluir evento">✕</ActionBtn>
           </div>
         )}
       </div>
@@ -452,18 +468,21 @@ function EventChip({
 
 // ─── Small UI helpers ──────────────────────────────────────────────────────
 
-function NavBtn({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
+function NavBtn({ onClick, children, label }: { onClick: () => void; children: React.ReactNode; label?: string }) {
   return (
-    <button onClick={onClick} style={secondaryBtnStyle}>
+    <button onClick={onClick} style={secondaryBtnStyle} aria-label={label} title={label}>
       {children}
     </button>
   );
 }
 
-function ActionBtn({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
+function ActionBtn({ onClick, children, label }: { onClick: () => void; children: React.ReactNode; label: string }) {
   return (
     <button
       onClick={onClick}
+      aria-label={label}
+      title={label}
+      className="touch-target"
       style={{
         background: "transparent",
         border: "none",

@@ -32,7 +32,7 @@ export default function Chat() {
   const [speechSupported, setSpeechSupported] = useState(false);
   // Mensagens restantes com a chave emprestada da demo; null quando a pessoa usa a própria chave.
   const [demoRemaining, setDemoRemaining] = useState<number | null>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   useEffect(() => {
@@ -47,9 +47,12 @@ export default function Chat() {
       .catch(() => {});
   }, []);
 
+  // Rola só a lista de mensagens. `scrollIntoView` rolava a página inteira, e
+  // no celular, onde o chat fica abaixo do resumo do dia, a tela abria no meio.
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    const list = listRef.current;
+    if (list) list.scrollTo({ top: list.scrollHeight, behavior: "smooth" });
+  }, [messages, loading]);
 
   async function fetchHistory() {
     const res = await fetch("/api/gemini");
@@ -124,7 +127,7 @@ export default function Chat() {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 400 }}>
       {/* Messages */}
-      <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 12, paddingBottom: 16 }}>
+      <div ref={listRef} style={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column", gap: 12, paddingBottom: 16 }}>
         {messages.length === 0 && !loading && (
           <div style={{ color: "var(--foreground-muted)", fontSize: 13, textAlign: "center", paddingTop: 32, lineHeight: 1.8 }}>
             Olá! Sou a ARIA.<br />
@@ -151,7 +154,6 @@ export default function Chat() {
             ))}
           </div>
         )}
-        <div ref={bottomRef} />
       </div>
 
       {demoRemaining !== null && (
@@ -169,9 +171,10 @@ export default function Chat() {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage(input)}
           placeholder={listening ? "Ouvindo..." : "Criar evento, tarefa, nota ou perguntar..."}
+          enterKeyHint="send"
           disabled={loading || listening}
           style={{
-            flex: 1, background: "var(--surface-2)", border: "1px solid var(--border)",
+            flex: 1, minWidth: 0, background: "var(--surface-2)", border: "1px solid var(--border)",
             borderRadius: 8, padding: "10px 14px", color: "var(--foreground)",
             fontSize: 13, outline: "none",
           }}

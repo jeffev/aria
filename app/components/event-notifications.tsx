@@ -5,6 +5,19 @@ import { useEffect, useRef } from "react";
 const ALERT_MINUTES = 15;
 const CHECK_INTERVAL_MS = 60_000;
 
+// No Android `new Notification()` lança erro: lá a notificação só sai pelo
+// service worker. No desktop sem service worker ativo o construtor serve.
+async function showNotification(title: string, options: NotificationOptions) {
+  const registration = "serviceWorker" in navigator
+    ? await navigator.serviceWorker.getRegistration()
+    : undefined;
+  if (registration) {
+    await registration.showNotification(title, options);
+    return;
+  }
+  new Notification(title, options);
+}
+
 export default function EventNotifications() {
   const notifiedIds = useRef<Set<string>>(new Set());
 
@@ -41,9 +54,9 @@ export default function EventNotifications() {
 
       if (minsUntil >= 0 && minsUntil <= ALERT_MINUTES) {
         notifiedIds.current.add(ev.id);
-        new Notification(`🔔 Em ${minsUntil} min: ${ev.title}`, {
+        showNotification(`🔔 Em ${minsUntil} min: ${ev.title}`, {
           body: `Início: ${start.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`,
-          icon: "/favicon.ico",
+          icon: "/icon-192.png",
           tag: ev.id,
         });
       }

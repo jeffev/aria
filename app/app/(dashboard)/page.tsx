@@ -34,9 +34,9 @@ export default async function DashboardPage() {
   const greeting = hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: 24, height: "calc(100vh - 64px)" }}>
+    <div className="dashboard-grid">
       {/* Coluna principal */}
-      <div style={{ overflowY: "auto", paddingRight: 8 }}>
+      <div className="dashboard-main">
         <div style={{ marginBottom: 28 }}>
           <h1 style={{ fontSize: 26, fontWeight: 600, margin: 0 }}>
             {greeting} 👋
@@ -47,7 +47,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Stat cards */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 24 }}>
+        <div className="stat-grid">
           <StatCard label="Reuniões hoje" value={String(todayEvents.length)} icon="◷" />
           <StatCard label="Tarefas pendentes" value={String(pendingTasks)} icon="✓" accent={pendingTasks > 0} />
           <StatCard label="Notificações" value={String(unreadNotifications)} icon="◉" accent={unreadNotifications > 0} />
@@ -91,6 +91,7 @@ export default async function DashboardPage() {
 
       {/* Chat */}
       <div
+        className="dashboard-chat"
         style={{
           background: "var(--surface)",
           border: "1px solid var(--border)",
@@ -115,6 +116,7 @@ function StatCard({ label, value, icon, accent }: {
 }) {
   return (
     <div
+      className="stat-card"
       style={{
         background: "var(--surface)",
         border: `1px solid ${accent ? "var(--accent)" : "var(--border)"}`,
@@ -125,10 +127,10 @@ function StatCard({ label, value, icon, accent }: {
         gap: 14,
       }}
     >
-      <span style={{ fontSize: 24, opacity: 0.7 }}>{icon}</span>
+      <span className="stat-icon" style={{ fontSize: 24, opacity: 0.7 }}>{icon}</span>
       <div>
         <p style={{ margin: 0, fontSize: 12, color: "var(--foreground-muted)" }}>{label}</p>
-        <p style={{ margin: "4px 0 0", fontSize: 26, fontWeight: 700, color: accent ? "var(--accent)" : "var(--foreground)" }}>
+        <p className="stat-value" style={{ margin: "4px 0 0", fontSize: 26, fontWeight: 700, color: accent ? "var(--accent)" : "var(--foreground)" }}>
           {value}
         </p>
       </div>

@@ -40,3 +40,308 @@ body {
   background: var(--border);
   border-radius: 3px;
 }
+
+/* ─── Layout responsivo ─────────────────────────────────────────────────────
+   As telas usam estilo inline; o que muda no celular vira classe aqui, porque
+   media query não alcança estilo inline. 768px separa celular de tablet. */
+
+.app-shell {
+  flex: 1;
+  display: flex;
+  min-width: 0;
+}
+
+.app-main {
+  flex: 1;
+  min-width: 0;
+  padding: 32px;
+  overflow-y: auto;
+  min-height: 100vh;
+}
+
+.mobile-only,
+.mobile-topbar,
+.mobile-tabbar {
+  display: none;
+}
+
+.mobile-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(8px + env(safe-area-inset-top)) 16px 8px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.mobile-topbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+  padding: 0 8px;
+  background: none;
+  border: none;
+  color: var(--foreground-muted);
+  font-size: 18px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.mobile-tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.mobile-tabbar a {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 0 8px;
+  text-decoration: none;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 24px;
+  height: calc(100vh - 64px);
+}
+
+.dashboard-main {
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.page-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.form-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.notes-grid {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 16px;
+  height: calc(100vh - 64px);
+}
+
+.task-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.task-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.inline-form {
+  display: flex;
+  gap: 8px;
+}
+
+/* Em tela de toque não existe hover: as ações que só apareciam no hover
+   ficam visíveis. */
+@media (hover: none) {
+  .note-actions {
+    opacity: 1 !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none !important;
+  }
+
+  .mobile-only {
+    display: revert;
+  }
+
+  .mobile-topbar,
+  .mobile-tabbar {
+    display: flex;
+  }
+
+  .app-shell {
+    flex-direction: column;
+  }
+
+  .app-main {
+    padding: 16px 16px calc(80px + env(safe-area-inset-bottom));
+    min-height: 0;
+    overflow-y: visible;
+  }
+
+  /* Abaixo de 16px o Safari do iPhone dá zoom no campo ao focar. */
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  h1 {
+    font-size: 22px !important;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    height: auto;
+    gap: 16px;
+  }
+
+  .dashboard-main {
+    overflow-y: visible;
+    padding-right: 0;
+  }
+
+  .dashboard-chat {
+    height: 70vh !important;
+    height: 70dvh !important;
+    min-height: 420px;
+    padding: 16px !important;
+  }
+
+  .stat-grid {
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .stat-card {
+    padding: 12px !important;
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 4px !important;
+  }
+
+  .stat-card .stat-icon {
+    display: none;
+  }
+
+  .stat-card .stat-value {
+    font-size: 22px !important;
+  }
+
+  .page-header {
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .page-actions {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .page-actions > * {
+    flex: 1;
+  }
+
+  .form-grid-3,
+  .form-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .week-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* No celular cada dia vira uma linha: data à esquerda, eventos à direita.
+     Empilhado, um dia sem nada ocupava quase meia tela. */
+  .week-day {
+    min-height: 0 !important;
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 12px;
+    align-items: start;
+    padding: 10px 12px !important;
+  }
+
+  .week-day-header {
+    margin-bottom: 0 !important;
+    text-align: center;
+  }
+
+  .notes-grid {
+    grid-template-columns: 1fr;
+    height: calc(100vh - 160px);
+    height: calc(100dvh - 160px - env(safe-area-inset-bottom));
+  }
+
+  /* No celular a lista e o editor de notas dividem a mesma tela: um de cada vez. */
+  .notes-grid[data-editing="true"] .notes-list,
+  .notes-grid[data-editing="false"] .notes-editor {
+    display: none !important;
+  }
+
+  .task-row {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .task-meta {
+    width: 100%;
+    padding-left: 52px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .inline-form {
+    flex-wrap: wrap;
+  }
+
+  .inline-form > input {
+    flex-basis: 100% !important;
+  }
+
+  .touch-target {
+    min-width: 36px;
+    min-height: 36px;
+    font-size: 15px !important;
+  }
+}

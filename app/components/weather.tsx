@@ -26,6 +26,8 @@ const WMO_CODES: Record<number, { label: string; icon: string }> = {
   95: { label: "Tempestade", icon: "⛈️" },
 };
 
+const MOBILE_QUERY = "(max-width: 768px)";
+
 function getWeatherInfo(code: number) {
   return WMO_CODES[code] ?? { label: "—", icon: "🌡️" };
 }
@@ -45,6 +47,9 @@ export default function WeatherWidget() {
   const [error, setError] = useState(false);
 
   useEffect(() => {
+    // O clima mora na barra lateral, que o celular não mostra: pedir a
+    // localização ali seria pedir permissão para nada.
+    if (window.matchMedia(MOBILE_QUERY).matches || !("geolocation" in navigator)) return;
     navigator.geolocation.getCurrentPosition(
       async ({ coords }) => {
         const { latitude: lat, longitude: lon } = coords;
