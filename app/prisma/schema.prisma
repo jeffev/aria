@@ -26,6 +26,8 @@ model User {
   notes         Note[]
   aiMessages    AiMessage[]
   settings      Setting[]
+  pushSubscriptions PushSubscription[]
+  pushReminders     PushReminder[]
 }
 
 model Account {
@@ -84,6 +86,7 @@ model Event {
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
   user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pushReminders  PushReminder[]
 
   @@unique([userId, source, sourceId])
 }
@@ -119,6 +122,39 @@ model Notification {
   receivedAt DateTime           @default(now())
 
   @@unique([source, sourceId])
+}
+
+// ─── Lembretes por push (app fechado) ───────────────────────────────────────
+
+// Um aparelho inscrito. `timezone` vem do aparelho: o servidor roda em UTC e
+// precisa dele para escrever "Início: 14:00" na hora local de quem recebe.
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  timezone  String   @default("America/Sao_Paulo")
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// Lembrete já enviado de uma ocorrência. A chave única é o que impede o mesmo
+// aviso de sair duas vezes quando duas rodadas do verificador se sobrepõem ou
+// o servidor reinicia no meio da janela.
+model PushReminder {
+  id           String   @id @default(cuid())
+  userId       String
+  eventId      String
+  occurrenceAt DateTime
+  sentAt       DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event        Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, occurrenceAt])
+  @@index([sentAt])
 }
 
 model AiMessage {

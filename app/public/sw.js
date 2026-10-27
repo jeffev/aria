@@ -4,7 +4,7 @@
 // a página offline. Páginas e respostas da API trazem dados da conta e nunca
 // entram no cache, para nada de um usuário sobrar num aparelho compartilhado.
 
-const CACHE = "aria-v1";
+const CACHE = "aria-v2";
 const OFFLINE_URL = "/offline.html";
 const PRECACHE = [OFFLINE_URL, "/aria-icon.svg", "/icon-192.png"];
 
@@ -52,14 +52,35 @@ self.addEventListener("fetch", (event) => {
   }
 });
 
-// Tocar na notificação de evento abre (ou traz para a frente) a agenda.
+// Lembrete enviado pelo servidor (lib/event-reminders.ts), com o app fechado.
+self.addEventListener("push", (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = { body: event.data ? event.data.text() : "" };
+  }
+  event.waitUntil(
+    self.registration.showNotification(data.title || "ARIA", {
+      body: data.body || "",
+      tag: data.tag,
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      data: { url: data.url || "/agenda" },
+    })
+  );
+});
+
+// Tocar na notificação abre (ou traz para a frente) a tela dela.
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
+  const path = (event.notification.data && event.notification.data.url) || "/agenda";
+  const target = new URL(path, self.location.origin).href;
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((windows) => {
       const open = windows.find((w) => new URL(w.url).origin === self.location.origin);
-      if (open) return open.focus().then((w) => w && w.navigate("/agenda"));
-      return self.clients.openWindow("/agenda");
+      if (open) return open.focus().then((w) => w && w.navigate(target));
+      return self.clients.openWindow(target);
     })
   );
 });

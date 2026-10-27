@@ -51,12 +51,17 @@ body {
   min-width: 0;
 }
 
+/* Coluna com a altura exata da tela: o Início e as Notas ocupam o que sobra
+   abaixo do aviso da demo. Com altura fixa calculada (100vh - padding) o aviso
+   empurrava o campo do chat para fora da tela. */
 .app-main {
   flex: 1;
   min-width: 0;
   padding: 32px;
   overflow-y: auto;
-  min-height: 100vh;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .mobile-only,
@@ -115,8 +120,10 @@ body {
 .dashboard-grid {
   display: grid;
   grid-template-columns: 1fr 380px;
+  grid-template-rows: minmax(0, 1fr);
   gap: 24px;
-  height: calc(100vh - 64px);
+  flex: 1;
+  min-height: 0;
 }
 
 .dashboard-main {
@@ -166,7 +173,8 @@ body {
   display: grid;
   grid-template-columns: 260px 1fr;
   gap: 16px;
-  height: calc(100vh - 64px);
+  flex: 1;
+  min-height: 0;
 }
 
 .task-row {
@@ -215,7 +223,8 @@ body {
 
   .app-main {
     padding: 16px 16px calc(80px + env(safe-area-inset-bottom));
-    min-height: 0;
+    height: auto;
+    display: block;
     overflow-y: visible;
   }
 
@@ -232,6 +241,7 @@ body {
 
   .dashboard-grid {
     grid-template-columns: 1fr;
+    grid-template-rows: none;
     height: auto;
     gap: 16px;
   }
@@ -309,6 +319,7 @@ body {
 
   .notes-grid {
     grid-template-columns: 1fr;
+    flex: none;
     height: calc(100vh - 160px);
     height: calc(100dvh - 160px - env(safe-area-inset-bottom));
   }

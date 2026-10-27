@@ -2,53 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUserId, unauthorized } from "@/lib/api-auth";
 import { isOverItemLimit, itemLimitMessage } from "@/lib/demo";
-import { Event } from "@/generated/prisma/client";
-
-type Recurrence = "NONE" | "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY";
-
-function expandEvent(event: Event, from: Date, to: Date) {
-  if (event.recurrence === "NONE") {
-    return event.startAt <= to && event.startAt >= from ? [event] : [];
-  }
-
-  const instances: (Event & { instanceId: string })[] = [];
-  const duration = event.endAt
-    ? event.endAt.getTime() - event.startAt.getTime()
-    : 0;
-
-  const rangeEnd = event.recurrenceEnd
-    ? new Date(Math.min(event.recurrenceEnd.getTime(), to.getTime()))
-    : to;
-
-  let cursor = new Date(event.startAt);
-  let safety = 0;
-
-  while (cursor <= rangeEnd && safety < 500) {
-    safety++;
-    if (cursor >= from) {
-      const endAt = event.endAt
-        ? new Date(cursor.getTime() + duration)
-        : null;
-      instances.push({
-        ...event,
-        startAt: new Date(cursor),
-        endAt,
-        instanceId: `${event.id}_${cursor.toISOString()}`,
-      });
-    }
-
-    const next = new Date(cursor);
-    switch (event.recurrence as Recurrence) {
-      case "DAILY":   next.setDate(next.getDate() + 1); break;
-      case "WEEKLY":  next.setDate(next.getDate() + 7); break;
-      case "MONTHLY": next.setMonth(next.getMonth() + 1); break;
-      case "YEARLY":  next.setFullYear(next.getFullYear() + 1); break;
-    }
-    cursor = next;
-  }
-
-  return instances;
-}
+import { expandEvent, occurringBetween } from "@/lib/event-recurrence";
 
 export async function GET(request: Request) {
   const userId = await getAuthenticatedUserId(request);
@@ -62,20 +16,7 @@ export async function GET(request: Request) {
   const toDate = to ? new Date(to) : new Date(Date.now() + 7 * 86400000);
 
   const baseEvents = await prisma.event.findMany({
-    where: {
-      userId,
-      OR: [
-        { recurrence: "NONE", startAt: { gte: fromDate, lte: toDate } },
-        {
-          recurrence: { not: "NONE" },
-          startAt: { lte: toDate },
-          OR: [
-            { recurrenceEnd: null },
-            { recurrenceEnd: { gte: fromDate } },
-          ],
-        },
-      ],
-    },
+    where: { userId, ...occurringBetween(fromDate, toDate) },
     orderBy: { startAt: "asc" },
   });
 

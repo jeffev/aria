@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import PushReminders from "@/components/push-reminders";
 
 const IS_DEMO = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
 
@@ -36,6 +37,10 @@ export default function ConfiguracoesPage() {
       </p>
 
       <GeminiKeySection />
+
+      <Section title="Lembretes no celular">
+        <PushReminders />
+      </Section>
 
       {/* Google Calendar */}
       {!IS_DEMO && (

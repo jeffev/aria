@@ -57,7 +57,9 @@ export default function EventNotifications() {
         showNotification(`🔔 Em ${minsUntil} min: ${ev.title}`, {
           body: `Início: ${start.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`,
           icon: "/icon-192.png",
-          tag: ev.id,
+          // Mesma tag do lembrete por push (lib/event-reminders.ts): com o app
+          // aberto chegam os dois, e o aparelho troca um pelo outro.
+          tag: `evento-${ev.id}-${start.toISOString()}`,
         });
       }
     }
